@@ -90,7 +90,7 @@ npm run dev
 > This is the current homepage design (Beta):
 
 ![TypingWeb Homepage](./Screenshot%202025-04-20%20153048.png)
-Live Demo:(typingweb-two.vercel.app)
+Live Demo:[Lets Go Live](typingweb-two.vercel.app)
 
 More UI features like stats, leaderboard, profile pages, and detailed reports are coming soon!
 
@@ -106,8 +106,8 @@ This is still in beta, but if you're a dev interested in open-source collab or h
 
 If you liked this project or want to connect:
 
-- GitHub: [your-username](https://github.com/vipinsao)
-- Twitter: [your-handle](https://x.com/vipinSao1)
+- GitHub: [vipinsao](https://github.com/vipinsao)
+- Twitter: [vipinSao1](https://x.com/vipinSao1)
 - Email: vipinc.sao@gmail.com
 
 ---
