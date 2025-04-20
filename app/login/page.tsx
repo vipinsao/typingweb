@@ -2,8 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { auth } from "@/lib/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth, googleProvider } from "@/lib/firebase";
+import {
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  sendPasswordResetEmail,
+} from "firebase/auth";
 import { FiMail, FiLock } from "react-icons/fi";
 import { FirebaseError } from "firebase/app";
 
@@ -11,17 +15,18 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [infoMsg, setInfoMsg] = useState("");
   const router = useRouter();
 
   useEffect(() => {
-    // ✅ Run only in browser
     if (typeof window !== "undefined") {
       localStorage.removeItem("isGuest");
     }
   }, []);
 
   const handleLogin = async () => {
-    setErrorMsg(""); // Reset previous errors
+    setErrorMsg("");
+    setInfoMsg("");
 
     if (!email || !password) {
       setErrorMsg("Please enter both email and password.");
@@ -33,8 +38,6 @@ export default function LoginPage() {
       router.push("/practice");
     } catch (error: unknown) {
       if (error instanceof FirebaseError) {
-        console.error("Login error:", error.message);
-
         switch (error.code) {
           case "auth/user-not-found":
             setErrorMsg("No user found with this email.");
@@ -49,9 +52,36 @@ export default function LoginPage() {
             setErrorMsg("Login failed. Please try again.");
         }
       } else {
-        console.error("Unknown error during login:", error);
         setErrorMsg("An unexpected error occurred.");
       }
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setErrorMsg("");
+    setInfoMsg("");
+
+    try {
+      await signInWithPopup(auth, googleProvider);
+      router.push("/practice");
+    } catch (error) {
+      console.error("Google login error:", error);
+      setErrorMsg("Google login failed.");
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setErrorMsg("Please enter your email to reset password.");
+      return;
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setInfoMsg("Password reset email sent!");
+    } catch (error) {
+      console.error("Password reset error:", error);
+      setErrorMsg("Failed to send password reset email.");
     }
   };
 
@@ -90,12 +120,29 @@ export default function LoginPage() {
           {errorMsg && (
             <p className="text-red-500 text-sm text-center">{errorMsg}</p>
           )}
+          {infoMsg && (
+            <p className="text-green-500 text-sm text-center">{infoMsg}</p>
+          )}
 
           <button
             onClick={handleLogin}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-md transition duration-200"
           >
             Login
+          </button>
+
+          <button
+            onClick={handleForgotPassword}
+            className="text-blue-400 text-sm hover:underline block mx-auto"
+          >
+            Forgot Password?
+          </button>
+
+          <button
+            onClick={handleGoogleLogin}
+            className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-md transition duration-200"
+          >
+            Continue with Google
           </button>
 
           <button

@@ -1,11 +1,11 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import paragraphs from "@/public/paragraphs.json";
 import { useRouter } from "next/navigation";
-import { auth } from "@/lib/firebase";
-import { onAuthStateChanged } from "firebase/auth";
-import Link from "next/link";
+
 import Footer from "@/components/Footer";
+import Header from "@/components/Header";
+import ControlPanel from "@/components/ControlPanel";
 
 const KeyboardPractice = () => {
   const [activeKey, setActiveKey] = useState<string | null>(null);
@@ -18,27 +18,14 @@ const KeyboardPractice = () => {
   const [accuracy, setAccuracy] = useState<number | null>(null);
   const [correctCount, setCorrectCount] = useState(0);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
-  const [user, setUser] = useState<{ name: string; isGuest: boolean }>({
-    name: "Guest",
-    isGuest: true,
-  });
-
-  useEffect(() => {
-    const storedGuest = localStorage.getItem("isGuest");
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (storedGuest === "true") {
-        setUser({ name: "Guest", isGuest: true });
-      } else if (currentUser) {
-        setUser({ name: currentUser.displayName || "User", isGuest: false });
-      }
-    });
-    return () => unsubscribe();
-  }, []);
+  const [startTime, setStartTime] = useState<number | null>(null);
+  const [wpm, setWpm] = useState<number | null>(null);
 
   const router = useRouter();
   const paragraphRef = useRef<string>("");
 
-  const resetTest = () => {
+  // Reset the typing test
+  const resetTest = useCallback(() => {
     const randomParagraph =
       paragraphs[mode][Math.floor(Math.random() * paragraphs[mode].length)];
     setTargetText(randomParagraph);
@@ -47,22 +34,35 @@ const KeyboardPractice = () => {
     setAccuracy(null);
     setCorrectCount(0);
     setIsStarted(false);
+    setStartTime(null);
+    setWpm(null);
     setShowCompletionModal(false);
-  };
+  }, [mode]);
 
-  const handleStop = () => {
+  // Stop typing and show stats
+  const handleStop = useCallback(() => {
     setIsStarted(false);
     const total = typedText.length;
     const correct = correctCount;
     const acc = total > 0 ? (correct / total) * 100 : 0;
     setAccuracy(Number(acc.toFixed(2)));
-    setShowCompletionModal(true);
-  };
 
+    if (startTime) {
+      const duration = (Date.now() - startTime) / 60000;
+      const words = typedText.trim().split(/\s+/).length;
+      const calculatedWpm = duration > 0 ? words / duration : 0;
+      setWpm(Number(calculatedWpm.toFixed(2)));
+    }
+
+    setShowCompletionModal(true);
+  }, [typedText, correctCount, startTime]);
+
+  // Auto-reset test when mode changes
   useEffect(() => {
     resetTest();
-  }, [mode]);
+  }, [resetTest]);
 
+  // Keydown/keyup logic
   useEffect(() => {
     if (!isStarted) return;
 
@@ -78,9 +78,7 @@ const KeyboardPractice = () => {
       const currentChar = paragraphRef.current[typedText.length];
 
       if (
-        /^[a-zA-Z0-9 .,!?;:'"()\[\]{}<>\\/\\|`~@#$%^&*\-_=+\\n\\t]$/.test(
-          inputChar
-        )
+        /^[a-zA-Z0-9 .,!?;:'"()\[\]{}<>\\/|`~@#$%^&*\-_=+\n\t]$/.test(inputChar)
       ) {
         if (typedText.length >= paragraphRef.current.length) return;
 
@@ -114,8 +112,9 @@ const KeyboardPractice = () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [typedText, isStarted]);
+  }, [typedText, isStarted, handleStop]);
 
+  // Keyboard Layout
   const englishLayout = [
     ["~", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "="],
     ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "[", "]", "\\"],
@@ -126,56 +125,21 @@ const KeyboardPractice = () => {
 
   return (
     <div className="min-h-screen flex flex-col justify-between items-center bg-black text-white p-4 overflow-x-hidden">
-      <div className="absolute top-4 right-4 text-white font-semibold">
-        {user.isGuest ? "Guest User" : `Hello, ${user.name}`}
-      </div>
+      <Header />
+      <ControlPanel
+        mode={mode}
+        setMode={setMode}
+        resetTest={resetTest}
+        setStartTime={setStartTime}
+        setIsStarted={setIsStarted}
+        handleStop={handleStop}
+      />
 
-      <h1
-        className="absolute top-4 left-4 text-4xl text-green-400 font-extrabold italic tracking-wide"
-        style={{ fontFamily: "'Courier New', Courier, monospace" }}
-      >
-        <Link href="/">TypeWeb</Link>
-      </h1>
-
-      <div className="flex items-center gap-4 mb-8">
-        <div>
-          <label className="mr-2 font-medium">Select Mode:</label>
-          <select
-            value={mode}
-            onChange={(e) =>
-              setMode(e.target.value as "easy" | "medium" | "hard")
-            }
-            className="p-1 rounded bg-gray-700 text-white border border-gray-500"
-          >
-            <option value="easy">Easy</option>
-            <option value="medium">Medium</option>
-            <option value="hard">Hard</option>
-          </select>
-        </div>
-        <button
-          onClick={() => {
-            resetTest();
-            setIsStarted(true);
-          }}
-          className="px-4 py-2 rounded bg-green-600 text-white font-medium"
-        >
-          Start
-        </button>
-        <button
-          onClick={handleStop}
-          className="px-4 py-2 rounded bg-red-600 text-white font-medium"
-        >
-          Stop
-        </button>
-      </div>
-
+      {/* Target Paragraph */}
       <div className="flex w-full justify-center mb-2">
         <div
-          className="text-2xl w-full max-w-[85vw] flex flex-wrap justify-center gap-[2px] text-center bg-gray-800 px-4 py-3 rounded-lg select-none leading-relaxed break-words"
-          style={{
-            wordBreak: "keep-all",
-            whiteSpace: "pre-wrap",
-          }}
+          className="text-[20px] w-full max-w-[85vw] flex flex-wrap justify-center gap-[2px] text-center bg-gray-800 px-4 py-3 rounded-lg select-none leading-relaxed break-words"
+          style={{ wordBreak: "keep-all", whiteSpace: "pre-wrap" }}
           onMouseDown={(e) => e.preventDefault()}
           onDoubleClick={(e) => e.preventDefault()}
         >
@@ -204,8 +168,9 @@ const KeyboardPractice = () => {
         </div>
       </div>
 
-      <div className="text-white space-y-1 mt-1  items-center gap-4 flex ml-[85%] w-full pr-10">
-        <p className="mt-1">
+      {/* Stats Panel */}
+      <div className="text-white space-y-1 mt-1 items-center gap-4 flex ml-[80%] w-full pr-10">
+        <p>
           <strong>Total Typed:</strong> {typedText.length}
         </p>
         <p>
@@ -216,8 +181,14 @@ const KeyboardPractice = () => {
             <strong>Accuracy:</strong> {accuracy}%
           </p>
         )}
+        {wpm !== null && (
+          <p>
+            <strong>WPM:</strong> {wpm}
+          </p>
+        )}
       </div>
 
+      {/* Keyboard */}
       <div className="flex flex-col items-center mt-3 space-y-2">
         {englishLayout.map((row, rowIdx) => (
           <div key={rowIdx} className="flex justify-center gap-1">
@@ -248,15 +219,18 @@ const KeyboardPractice = () => {
         ))}
       </div>
 
+      {/* Completion Modal */}
       {showCompletionModal && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
           <div className="bg-gray-900 p-6 rounded-xl text-center space-y-4 border border-gray-700">
             <h2 className="text-xl font-semibold">Typing Completed!</h2>
             <p>Your accuracy: {accuracy}%</p>
+            <p>Your WPM: {wpm}</p>
             <div className="flex justify-center gap-4 mt-4">
               <button
                 onClick={() => {
                   resetTest();
+                  setStartTime(Date.now());
                   setIsStarted(true);
                 }}
                 className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
