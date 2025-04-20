@@ -42,13 +42,11 @@ This is a personal project I built to not only help others practice typing, but 
 
 I created a simple array of objects to store predefined paragraphs for each difficulty level:
 
-\`\`\`ts
 const paragraphs = {
   easy: [ "Simple para 1", "Simple para 2", ... ],
   medium: [ "Medium para 1", ... ],
   hard: [ "Hard para 1", ... ],
 };
-\`\`\`
 
 Then I used \`Math.random()\` to randomly select paragraphs during a test. It’s lightweight and quick — no database required for this part.
 
@@ -70,7 +68,7 @@ After logging in, your name is shown with an auto-generated avatar from the \`ui
 
 Want to run this locally? Follow these steps:
 
-\`\`\`bash
+bash
 # 1. Clone the repository
 git clone https://github.com/your-username/TypingWeb.git
 
@@ -84,7 +82,6 @@ touch .env.local
 
 # 4. Run the dev server
 npm run dev
-\`\`\`
 
 ---
 
@@ -93,6 +90,7 @@ npm run dev
 > This is the current homepage design (Beta):
 
 ![TypingWeb Homepage](./Screenshot%202025-04-20%20153048.png)
+![Live Demo](typingweb-two.vercel.app)
 
 More UI features like stats, leaderboard, profile pages, and detailed reports are coming soon!
 
