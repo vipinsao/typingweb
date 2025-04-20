@@ -63,6 +63,16 @@ For auth, I integrated **Firebase** with full support for:
 After logging in, your name is shown with an auto-generated avatar from the \`ui-avatars.com\` API.
 
 ---
+## 🧪 Demo Preview
+
+> This is the current homepage design (Beta):
+
+![TypingWeb Homepage](./Screenshot%202025-04-20%20153048.png)
+Live Demo:  [Lets Go Live](typingweb-two.vercel.app)
+
+More UI features like stats, leaderboard, profile pages, and detailed reports are coming soon!
+
+---
 
 ## 💻 Local Setup
 
@@ -78,21 +88,11 @@ npm install
 
 # 3. Create a .env file for Firebase config
 touch .env.local
+
 # Add your Firebase config keys here
 
 # 4. Run the dev server
 npm run dev
-
----
-
-## 🧪 Demo Preview
-
-> This is the current homepage design (Beta):
-
-![TypingWeb Homepage](./Screenshot%202025-04-20%20153048.png)
-Live Demo:  [Lets Go Live](typingweb-two.vercel.app)
-
-More UI features like stats, leaderboard, profile pages, and detailed reports are coming soon!
 
 ---
 
